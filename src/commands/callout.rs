@@ -24,7 +24,7 @@ impl fmt::Display for Arguments {
 
 impl PartialEq<&String> for Arguments {
     fn eq(&self, other: &&std::string::String) -> bool {
-        self.to_string() == **other
+        self.to_string().to_lowercase() == **other
     }
 
     fn ne(&self, other: &&String) -> bool {
@@ -37,17 +37,17 @@ impl Command for Callout {
     async fn respond(
         &self,
         options: &Option<Vec<ApplicationCommandInteractionDataOption>>,
-        _ctx: &mut worker::RouteContext<()>,
+        ctx: &mut worker::RouteContext<()>,
     ) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
         if let Some(options) = options {
-            if let Some(option) = options.get(0) {
+            if let Some(option) = options.first() {
                 if Arguments::Map == &option.name {
-                    return Callout::handle_map(&option.value);
+                    return Callout::handle_map(&option.value, ctx).await;
                 }
             }
         }
 
-        Callout::handle_default()
+        Callout::handle_error(&format!("No options supplied.")).await
     }
 
     fn name(&self) -> String {
@@ -77,48 +77,55 @@ impl Command for Callout {
         Ok(InteractionApplicationCommandCallbackData {
             content: None,
             embeds: None,
-            choices: Some(vec![ApplicationCommandOptionChoice {
-                name: "option 1".into(),
-                value: "test".into(),
-            }]),
+            choices: Some(vec![
+                ApplicationCommandOptionChoice {
+                    name: "Wahoo World".into(),
+                    value: "wahoo".into(),
+                },
+                ApplicationCommandOptionChoice {
+                    name: "Undertow Spillway".into(),
+                    value: "undertow".into(),
+                },
+            ]),
         })
     }
 }
 
 impl Callout {
-    fn handle_default() -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
+    async fn handle_error(
+        error: &String,
+    ) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
         Ok(InteractionApplicationCommandCallbackData {
-            content: Some("Supply a map name to get callouts.".to_string()),
+            content: Some(error.to_string()),
             choices: None,
             embeds: None,
         })
     }
 
-    fn handle_map(
+    async fn handle_map(
         map_name: &Option<String>,
+        ctx: &mut worker::RouteContext<()>,
     ) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
-        match map_name {
-            Some(name) => Ok(InteractionApplicationCommandCallbackData {
-                content: Some(format!("Callouts for {} map", name).to_string()),
-                choices: None,
-                embeds: None,
-            }),
-            _ => Self::handle_default(),
+        if let Ok(kv) = ctx.kv("CALLOUTS") {
+            match map_name {
+                Some(name) => {
+                    if let Ok(Some(value)) = kv.get(name.as_str()).text().await {
+                        Ok(InteractionApplicationCommandCallbackData {
+                            content: Some(value),
+                            choices: None,
+                            embeds: None,
+                        })
+                    } else {
+                        Self::handle_error(&format!("No image found for {:?}", map_name)).await
+                    }
+                }
+                _ => Self::handle_error(&format!("No map option sent with request.")).await,
+            }
+        } else {
+            Self::handle_error(&format!(
+                "Could not find CALLOUTS KV namespace, make sure it is bound in wrangler."
+            ))
+            .await
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
-    use super::*;
-
-    #[test]
-    fn test_add() {
-        let callout = Callout::handle_map(&Some("map".to_string()));
-        assert_eq!(
-            callout.unwrap().content.unwrap(),
-            "Callouts for map map".to_string()
-        );
     }
 }

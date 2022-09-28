@@ -9,3 +9,8 @@ WORKERS_RS_VERSION = "main"
 
 [build]
 command = "cargo install -q worker-build --branch main --git https://github.com/cloudflare/workers-rs.git && worker-build --release" # required
+
+[[kv_namespaces]]
+binding = "CALLOUTS"
+preview_id = "83586fc85cb84a768c81b9a6703df778"
+id = "83586fc85cb84a768c81b9a6703df778"
