@@ -1,0 +1,15 @@
+name = "tes-s3-callouts"
+workers_dev = true
+compatibility_date = "2022-09-27"
+account_id = "d75651535f55ef350fcff7f5ae815237"
+main = "build/worker/shim.mjs"
+
+[vars]
+WORKERS_RS_VERSION = "main"
+
+[build]
+command = "cargo install -q worker-build --branch main --git https://github.com/cloudflare/workers-rs.git && worker-build --release" # required
+
+[[rules]]
+globs = ["**/*.wasm"]
+type = "CompiledWasm"
