@@ -9,7 +9,3 @@ WORKERS_RS_VERSION = "main"
 
 [build]
 command = "cargo install -q worker-build --branch main --git https://github.com/cloudflare/workers-rs.git && worker-build --release" # required
-
-[[rules]]
-globs = ["**/*.wasm"]
-type = "CompiledWasm"

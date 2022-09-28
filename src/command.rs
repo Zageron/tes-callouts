@@ -1,12 +1,16 @@
-use serde::{Deserialize, Serialize};
 use crate::commands;
-use crate::interaction::*;
 use crate::error::InteractionError;
+use crate::interaction::*;
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 #[async_trait(?Send)]
 pub(crate) trait Command {
-    async fn respond(&self, _options: &Option<Vec<ApplicationCommandInteractionDataOption>>, _ctx: &mut worker::RouteContext<()>) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
+    async fn respond(
+        &self,
+        _options: &Option<Vec<ApplicationCommandInteractionDataOption>>,
+        _ctx: &mut worker::RouteContext<()>,
+    ) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
         // Implement the command logic here
         unimplemented!()
     }
@@ -25,7 +29,11 @@ pub(crate) trait Command {
         unimplemented!()
     }
 
-    async fn autocomplete(&self, _options: &Option<Vec<ApplicationCommandInteractionDataOption>>, _ctx: &mut worker::RouteContext<()>) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
+    async fn autocomplete(
+        &self,
+        _options: &Option<Vec<ApplicationCommandInteractionDataOption>>,
+        _ctx: &mut worker::RouteContext<()>,
+    ) -> Result<InteractionApplicationCommandCallbackData, InteractionError> {
         // If your command supports autocomplete implement the logic here
         unimplemented!()
     }
@@ -35,12 +43,12 @@ pub(crate) trait Command {
 pub(crate) struct RegisteredCommand {
     pub(crate) name: String,
     pub(crate) description: String,
-    pub(crate) options: Option<Vec<ApplicationCommandOption>>
+    pub(crate) options: Option<Vec<ApplicationCommandOption>>,
 }
 
-
 pub(crate) fn init_commands() -> Vec<Box<dyn Command + Sync>> {
-    let mut v : Vec<Box<dyn Command + Sync>> = Vec::new();
+    let mut v: Vec<Box<dyn Command + Sync>> = Vec::new();
     v.push(Box::new(commands::hello::Hello {}));
+    v.push(Box::new(commands::callout::Callout {}));
     v
 }
